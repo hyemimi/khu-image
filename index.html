@@ -7,7 +7,14 @@
     <title>Vite App</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div class="container">
+      <div class="container-sidebar">
+        <input type="file" accept="image/*" id="upload" />
+      </div>
+      <div class="container-canvasWrapper">
+        <canvas id="imageCanvas"></canvas>
+      </div>
+    </div>
     <script type="module" src="/main.js"></script>
   </body>
 </html>
