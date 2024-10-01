@@ -10,6 +10,20 @@
     <div class="container">
       <div class="container-sidebar">
         <input type="file" accept="image/*" id="upload" />
+        <div class="container-sidebar-filterWrapper">
+          <div class="container-sidebar-filterWrapper-box">
+            <label for="grayscaleRange">흑백 필터</label>
+          <input type="range" id="grayscaleRange" min="0" max="100" value="0" />
+          </div>
+          <div class="container-sidebar-filterWrapper-box">
+          <label for="sepiaRange">세피아 필터</label>
+          <input type="range" id="sepiaRange" min="0" max="100" value="0" />
+          </div>
+          <div>
+            <label for="invertRange">색상 반전 필터</label>
+            <input type="range" id="invertRange" min="0" max="100" value="0" />
+          </div>
+        </div>
       </div>
       <div class="container-canvasWrapper">
         <canvas id="imageCanvas"></canvas>
