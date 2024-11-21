@@ -1,11 +1,13 @@
-import './style.scss'
-
+import './style.css'
+import { JSapplyGrayscale, JSapplyInvert, JSapplySepia } from './jsFilter';
 
 const upload = document.getElementById("upload");
 const canvas = document.getElementById("imageCanvas");
 const ctx = canvas.getContext('2d');
 let originalImageData;
 
+
+// 파일 업로드
 upload.addEventListener('change', (e) => {
   const file = e.target.files[0];
   const img = new Image();
@@ -18,35 +20,23 @@ upload.addEventListener('change', (e) => {
   };
 });
 
-/** 이미지 필터 */
-
-const grayscaleRange = document.getElementById('grayscaleRange');
-const sepiaRange = document.getElementById('sepiaRange');
-const invertRange = document.getElementById('invertRange');
-
-grayscaleRange.addEventListener('input', () => applyFilter('grayscale', grayscaleRange.value));
-sepiaRange.addEventListener('input', () => applyFilter('sepia', sepiaRange.value));
-invertRange.addEventListener('input', () => applyFilter('invert', invertRange.value));
-
-
-function applyFilter(filterType, percentage) {
-  // 슬라이더 값을 비율로 변환 (0에서 1 사이 값)
-  const intensity = percentage / 100;
+/** 이미지 필터 - js */
+function applyFilter(filterType) {
 
   // 원본 이미지 데이터를 복사하여 사용
   let imageData = new ImageData(new Uint8ClampedArray(originalImageData.data), originalImageData.width, originalImageData.height);
 
   switch (filterType) {
-    case 'grayscale':
-      imageData = applyGrayscale(imageData, intensity);
+    case 'JSgrayscale':
+      imageData = JSapplyGrayscale(imageData);
       console.log(imageData);
       break;
-    case 'sepia':
-      imageData = applySepia(imageData, intensity);
+    case 'JSsepia':
+      imageData = JSapplySepia(imageData);
       console.log(imageData);
       break;
-    case 'invert':
-      imageData = applyInvert(imageData, intensity);
+    case 'JSinvert':
+      imageData = JSapplyInvert(imageData);
       console.log(imageData);
       break;
   }
@@ -55,43 +45,49 @@ function applyFilter(filterType, percentage) {
   ctx.putImageData(imageData, 0, 0);
 }
 
-// 그레이스케일 필터: 슬라이더 강도에 따라 조정
-function applyGrayscale(imageData, intensity) {
-  const data = imageData.data;
-  for (let i = 0; i < data.length; i += 4) {
-    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    data[i] = data[i] + (avg - data[i]) * intensity;       // Red
-    data[i + 1] = data[i + 1] + (avg - data[i + 1]) * intensity; // Green
-    data[i + 2] = data[i + 2] + (avg - data[i + 2]) * intensity; // Blue
+document.getElementById('JSgrayscaleRange').addEventListener('click', () => applyFilter('JSgrayscale'));
+document.getElementById('JSsepiaRange').addEventListener('click', () => applyFilter('JSsepia'));
+document.getElementById('JSinvertRange').addEventListener('click', () => applyFilter('JSinvert'));
+
+
+/**WASM */
+// Real-time filter application function
+function applyWASMFilter(filterType) {
+  let imageData = new ImageData(new Uint8ClampedArray(originalImageData?.data), originalImageData?.width, originalImageData?.height);
+  
+  if (!imageData) return;
+
+  const width = imageData.width;
+  const height = imageData.height;
+  const dataPtr = Module._malloc(imageData.data.length);
+  Module.HEAPU8.set(imageData.data, dataPtr);
+
+  switch (filterType) {
+    case 'WASMgrayscale':
+      Module.ccall("apply_grayscale", null, ["number", "number", "number"], [dataPtr, width, height]);
+      console.log(imageData);
+      break;
+    case 'WASMsepia':
+      Module.ccall("apply_sepia", null, ["number", "number", "number"], [dataPtr, width, height]);
+      console.log(imageData);
+      break;
+    case 'WASMinvert':
+      Module.ccall("apply_invert", null, ["number", "number", "number"], [dataPtr, width, height]);
+      console.log(imageData);
+      break;
   }
-  return imageData;
+
+  // Update the canvas with the new image data
+  const resultData = new Uint8ClampedArray(Module.HEAPU8.subarray(dataPtr, dataPtr + imageData.data.length));
+  imageData.data.set(resultData);
+  ctx.putImageData(imageData, 0, 0);
+
+  Module._free(dataPtr);
 }
 
-// 세피아 필터: 슬라이더 강도에 따라 조정
-function applySepia(imageData, intensity) {
-  const data = imageData.data;
-  for (let i = 0; i < data.length; i += 4) {
-    const red = data[i];
-    const green = data[i + 1];
-    const blue = data[i + 2];
-
-    data[i] = red + (red * 0.393 + green * 0.769 + blue * 0.189 - red) * intensity;
-    data[i + 1] = green + (red * 0.349 + green * 0.686 + blue * 0.168 - green) * intensity;
-    data[i + 2] = blue + (red * 0.272 + green * 0.534 + blue * 0.131 - blue) * intensity;
-  }
-  return imageData;
-}
-
-// 색상 반전 필터: 슬라이더 강도에 따라 조정
-function applyInvert(imageData, intensity) {
-  const data = imageData.data;
-  for (let i = 0; i < data.length; i += 4) {
-    data[i] = data[i] + (255 - data[i]) * intensity;        // Red
-    data[i + 1] = data[i + 1] + (255 - data[i + 1]) * intensity; // Green
-    data[i + 2] = data[i + 2] + (255 - data[i + 2]) * intensity; // Blue
-  }
-  return imageData;
-}
-
+// Attach the applyFilter function to each slider’s input event
+document.getElementById("WASMgrayscaleRange").addEventListener("click", () => applyWASMFilter('WASMgrayscale'));
+document.getElementById("WASMsepiaRange").addEventListener("click", () => applyWASMFilter('WASMsepia'));
+document.getElementById("WASMinvertRange").addEventListener("click", () => applyWASMFilter('WASMinvert'));
 
 
