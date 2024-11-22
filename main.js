@@ -25,19 +25,29 @@ function applyFilter(filterType) {
 
   // 원본 이미지 데이터를 복사하여 사용
   let imageData = new ImageData(new Uint8ClampedArray(originalImageData.data), originalImageData.width, originalImageData.height);
+  const width = imageData.width;
+  const height = imageData.height;
+
+  if (!imageData) return;
 
   switch (filterType) {
     case 'JSgrayscale':
+      const jsGrayStart = window.performance.now();
       imageData = JSapplyGrayscale(imageData);
-      console.log(imageData);
+      const jsGrayEnd = window.performance.now();
+      console.log('js',jsGrayEnd-jsGrayStart);
       break;
     case 'JSsepia':
+      const jsSepiaStart = window.performance.now();
       imageData = JSapplySepia(imageData);
-      console.log(imageData);
+      const jsSepiaEnd = window.performance.now();
+      console.log('js',jsSepiaEnd - jsSepiaStart);
       break;
     case 'JSinvert':
+      const jsInvertStart = window.performance.now();
       imageData = JSapplyInvert(imageData);
-      console.log(imageData);
+      const jsInvertEnd = window.performance.now();
+      console.log('js',jsInvertEnd - jsInvertStart);
       break;
   }
   
@@ -64,16 +74,23 @@ function applyWASMFilter(filterType) {
 
   switch (filterType) {
     case 'WASMgrayscale':
+      const wasmGrayStart = window.performance.now();
       Module.ccall("apply_grayscale", null, ["number", "number", "number"], [dataPtr, width, height]);
-      console.log(imageData);
+      const wasmGrayEnd = window.performance.now();
+      console.log('wasm', wasmGrayEnd - wasmGrayStart);
       break;
     case 'WASMsepia':
+      const wasmSepiaStart = window.performance.now();
       Module.ccall("apply_sepia", null, ["number", "number", "number"], [dataPtr, width, height]);
-      console.log(imageData);
+      const wasmSepiaEnd = window.performance.now();
+      console.log('wasm',wasmSepiaEnd - wasmSepiaStart);
       break;
     case 'WASMinvert':
+      const wasmInvertStart = window.performance.now();
       Module.ccall("apply_invert", null, ["number", "number", "number"], [dataPtr, width, height]);
-      console.log(imageData);
+      const wasmInvertEnd = window.performance.now();
+      console.log('wasm',wasmInvertEnd - wasmInvertStart);
+
       break;
   }
 
