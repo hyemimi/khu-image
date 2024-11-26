@@ -43,4 +43,85 @@ void apply_invert(uint8_t* imageData, int width, int height) {
         imageData[i + 2] = 255 - imageData[i + 2];
     }
 }
+
+// Gaussian Blur 필터
+EMSCRIPTEN_KEEPALIVE
+void apply_gaussian_blur(uint8_t* imageData, int width, int height) {
+    const int kernelSize = 5;
+    const int kernel[kernelSize][kernelSize] = {
+        {1, 4, 6, 4, 1},
+        {4, 16, 24, 16, 4},
+        {6, 24, 36, 24, 6},
+        {4, 16, 24, 16, 4},
+        {1, 4, 6, 4, 1}
+    };
+    const int kernelSum = 256;
+
+    std::vector<uint8_t> output(imageData, imageData + width * height * 4);
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int r = 0, g = 0, b = 0;
+
+            for (int ky = -2; ky <= 2; ky++) {
+                for (int kx = -2; kx <= 2; kx++) {
+                    int px = std::min(width - 1, std::max(0, x + kx));
+                    int py = std::min(height - 1, std::max(0, y + ky));
+                    int weight = kernel[ky + 2][kx + 2];
+                    int index = (py * width + px) * 4;
+
+                    r += imageData[index] * weight;
+                    g += imageData[index + 1] * weight;
+                    b += imageData[index + 2] * weight;
+                }
+            }
+
+            int index = (y * width + x) * 4;
+            output[index] = r / kernelSum;
+            output[index + 1] = g / kernelSum;
+            output[index + 2] = b / kernelSum;
+        }
+    }
+
+    std::copy(output.begin(), output.end(), imageData);
 }
+
+// Histogram Equalization 필터
+EMSCRIPTEN_KEEPALIVE
+void apply_histogram_equalization(uint8_t* imageData, int width, int height) {
+    int size = width * height * 4;
+    std::vector<int> histogram(256, 0);
+
+    // 1. 히스토그램 계산
+    for (int i = 0; i < size; i += 4) {
+        uint8_t gray = static_cast<uint8_t>(0.299 * imageData[i] + 0.587 * imageData[i + 1] + 0.114 * imageData[i + 2]);
+        histogram[gray]++;
+        imageData[i] = imageData[i + 1] = imageData[i + 2] = gray; // 그레이스케일 변환
+    }
+
+    // 2. 누적 분포 계산 (CDF)
+    std::vector<int> cdf(256, 0);
+    cdf[0] = histogram[0];
+    for (int i = 1; i < 256; i++) {
+        cdf[i] = cdf[i - 1] + histogram[i];
+    }
+
+    // 3. CDF 정규화
+    int cdfMin = *std::find_if(cdf.begin(), cdf.end(), [](int value) { return value > 0; });
+    int pixelCount = width * height;
+    std::vector<uint8_t> lookupTable(256);
+    for (int i = 0; i < 256; i++) {
+        lookupTable[i] = static_cast<uint8_t>(std::round(((cdf[i] - cdfMin) / static_cast<float>(pixelCount - cdfMin)) * 255));
+    }
+
+    // 4. 픽셀 값 매핑
+    for (int i = 0; i < size; i += 4) {
+        uint8_t equalized = lookupTable[imageData[i]];
+        imageData[i] = imageData[i + 1] = imageData[i + 2] = equalized;
+    }
+}
+
+}
+
+
+

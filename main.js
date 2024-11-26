@@ -1,5 +1,5 @@
 import './style.css'
-import { JSapplyGrayscale, JSapplyInvert, JSapplySepia } from './jsFilter';
+import { JSapplyGaussianBlur, JSapplyGrayscale, JSapplyHistogramEqualization, JSapplyInvert, JSapplySepia } from './jsFilter';
 
 const upload = document.getElementById("upload");
 const canvas = document.getElementById("imageCanvas");
@@ -49,6 +49,18 @@ function applyFilter(filterType) {
       const jsInvertEnd = window.performance.now();
       console.log('js',jsInvertEnd - jsInvertStart);
       break;
+    case 'JSgaussian':
+      const jsgaussianStart = window.performance.now();
+      imageData = JSapplyGaussianBlur(imageData,width,height);
+      const jsgaussianEnd = window.performance.now();
+      console.log('js',jsgaussianEnd - jsgaussianStart);
+      break;
+    case 'JShistogram':
+      const jshistogramStart = window.performance.now();
+      imageData = JSapplyHistogramEqualization(imageData);
+      const jshistogramEnd = window.performance.now();
+      console.log('js',jshistogramEnd - jshistogramStart);
+      break;
   }
   
   // 캔버스에 필터 적용된 이미지 데이터 다시 그리기
@@ -58,8 +70,8 @@ function applyFilter(filterType) {
 document.getElementById('JSgrayscaleRange').addEventListener('click', () => applyFilter('JSgrayscale'));
 document.getElementById('JSsepiaRange').addEventListener('click', () => applyFilter('JSsepia'));
 document.getElementById('JSinvertRange').addEventListener('click', () => applyFilter('JSinvert'));
-
-
+document.getElementById('JSgaussianRange').addEventListener('click', () => applyFilter('JSgaussian'));
+document.getElementById('JShistogramRange').addEventListener('click', () => applyFilter('JShistogram'));
 /**WASM */
 // Real-time filter application function
 function applyWASMFilter(filterType) {
@@ -92,6 +104,20 @@ function applyWASMFilter(filterType) {
       console.log('wasm',wasmInvertEnd - wasmInvertStart);
 
       break;
+    case 'WASMgaussian':
+      const wasmGaussianStart = window.performance.now();
+      Module.ccall("apply_gaussian", null, ["number", "number", "number"], [dataPtr, width, height]);
+      const wasmGaussianEnd = window.performance.now();
+      console.log('wasm',wasmGaussianEnd - wasmGaussianStart);
+
+      break;
+    case 'WASMhistogram':
+      const wasmHistogramStart = window.performance.now();
+      Module.ccall("apply_histogram", null, ["number", "number", "number"], [dataPtr, width, height]);
+      const wasmHistogramEnd = window.performance.now();
+      console.log('wasm',wasmHistogramEnd - wasmHistogramStart);
+
+    break;
   }
 
   // Update the canvas with the new image data
@@ -106,5 +132,5 @@ function applyWASMFilter(filterType) {
 document.getElementById("WASMgrayscaleRange").addEventListener("click", () => applyWASMFilter('WASMgrayscale'));
 document.getElementById("WASMsepiaRange").addEventListener("click", () => applyWASMFilter('WASMsepia'));
 document.getElementById("WASMinvertRange").addEventListener("click", () => applyWASMFilter('WASMinvert'));
-
-
+document.getElementById("WASMgaussianRange").addEventListener("click", () => applyWASMFilter('WASMgaussian'));
+document.getElementById("WASMhistogramRange").addEventListener("click", () => applyWASMFilter('WASMhistogram'));

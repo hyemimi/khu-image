@@ -26,13 +26,22 @@
             <button id="JSinvertRange">JavaScript</button>
             <button id="WASMinvertRange">WASM</button>
           </div>
+          <div class="sidebar-box">
+            <label for="gaussianRange">가우시안 블러</label>
+            <button id="JSgaussianRange">JavaScript</button>
+            <button id="WASMgaussianRange">WASM</button>
+          </div>
+          <div class="sidebar-box">
+            <label for="histogramRange">히스토그램 평활화</label>
+            <button id="JShistogramRange">JavaScript</button>
+            <button id="WASMhistogramRange">WASM</button>
+          </div>
         </div>
       </div>
       <div class="canvasWrapper">
         <canvas id="imageCanvas"></canvas>
       </div>
     </div>
-    <script>let Module={};</script>
     <script src="filter.js"></script>
     <script type="module" src="main.js"></script>
   </body>
