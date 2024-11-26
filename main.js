@@ -1,5 +1,5 @@
 import './style.css'
-import { JSapplyGaussianBlur, JSapplyGrayscale, JSapplyHistogramEqualization, JSapplyInvert, JSapplySepia } from './jsFilter';
+import { JSapplyGaussianBlur, JSapplyGrayscale, JSapplyHistogramEqualization, JSapplyInvert, JSapplySepia, JSapplyThreshold, JSapplyCanny } from './jsFilter';
 
 const upload = document.getElementById("upload");
 const canvas = document.getElementById("imageCanvas");
@@ -61,6 +61,16 @@ function applyFilter(filterType) {
       const jshistogramEnd = window.performance.now();
       console.log('js',jshistogramEnd - jshistogramStart);
       break;
+    case 'JSthreshold':
+      console.time('JS Threshold');
+      imageData = JSapplyThreshold(imageData, 128);
+      console.timeEnd('JS Threshold');
+      break;
+    case 'JScanny':
+      console.time('JS Canny Edge Detection');
+      imageData = JSapplyCanny(imageData, width, height);
+      console.timeEnd('JS Canny Edge Detection');
+      break;
   }
   
   // 캔버스에 필터 적용된 이미지 데이터 다시 그리기
@@ -72,6 +82,8 @@ document.getElementById('JSsepiaRange').addEventListener('click', () => applyFil
 document.getElementById('JSinvertRange').addEventListener('click', () => applyFilter('JSinvert'));
 document.getElementById('JSgaussianRange').addEventListener('click', () => applyFilter('JSgaussian'));
 document.getElementById('JShistogramRange').addEventListener('click', () => applyFilter('JShistogram'));
+document.getElementById('JSthresholdRange').addEventListener('click', () => applyFilter('JSthreshold', 128)); // 임계값 128
+document.getElementById('JScannyRange').addEventListener('click', () => applyFilter('JScanny'));
 /**WASM */
 // Real-time filter application function
 function applyWASMFilter(filterType) {
@@ -109,15 +121,23 @@ function applyWASMFilter(filterType) {
       Module.ccall("apply_gaussian", null, ["number", "number", "number"], [dataPtr, width, height]);
       const wasmGaussianEnd = window.performance.now();
       console.log('wasm',wasmGaussianEnd - wasmGaussianStart);
-
       break;
     case 'WASMhistogram':
       const wasmHistogramStart = window.performance.now();
       Module.ccall("apply_histogram", null, ["number", "number", "number"], [dataPtr, width, height]);
       const wasmHistogramEnd = window.performance.now();
       console.log('wasm',wasmHistogramEnd - wasmHistogramStart);
-
-    break;
+      break;
+    case 'WASMthreshold':
+      console.time('WASM Threshold');
+      Module.ccall("apply_threshold", null, ["number", "number", "number", "number"], [dataPtr, width, height, 128]);
+      console.timeEnd('WASM Threshold');
+      break;
+    case 'WASMcanny':
+      console.time('WASM Canny Edge Detection');
+      Module.ccall("apply_canny", null, ["number", "number", "number"], [dataPtr, width, height]);
+      console.timeEnd('WASM Canny Edge Detection');
+      break;
   }
 
   // Update the canvas with the new image data
@@ -134,3 +154,5 @@ document.getElementById("WASMsepiaRange").addEventListener("click", () => applyW
 document.getElementById("WASMinvertRange").addEventListener("click", () => applyWASMFilter('WASMinvert'));
 document.getElementById("WASMgaussianRange").addEventListener("click", () => applyWASMFilter('WASMgaussian'));
 document.getElementById("WASMhistogramRange").addEventListener("click", () => applyWASMFilter('WASMhistogram'));
+document.getElementById("WASMthresholdRange").addEventListener("click", () => applyWASMFilter('WASMthreshold', 128)); // 임계값 128
+document.getElementById("WASMcannyRange").addEventListener("click", () => applyWASMFilter('WASMcanny'));

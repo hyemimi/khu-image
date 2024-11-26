@@ -110,3 +110,61 @@ export function JSapplyHistogramEqualization(imageData) {
 
   return imageData;
 }
+
+// Threshold 필터: Grayscale 변환 후 이진화
+export function JSapplyThreshold(imageData, threshold) {
+  const data = imageData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    // Grayscale 계산 (R, G, B 가중치)
+    const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    const value = gray >= threshold ? 255 : 0;
+    data[i] = data[i + 1] = data[i + 2] = value; // R, G, B에 동일한 값 설정
+    // Alpha 값(data[i + 3])은 그대로 유지
+  }
+  return imageData;
+}
+
+// 간단한 Canny Edge Detection: Grayscale 변환 후 Sobel 필터 기반
+export function JSapplyCanny(imageData, width, height) {
+  const data = imageData.data;
+  const grayscale = new Uint8Array(width * height);
+
+  // 1. Grayscale 변환 (R, G, B 가중치 사용)
+  for (let i = 0; i < data.length; i += 4) {
+    grayscale[i / 4] = Math.round(
+      0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
+    );
+  }
+
+  // 2. Sobel 필터 적용 (Gx, Gy 계산)
+  const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+  const sobelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+  const edges = new Uint8Array(width * height);
+
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      let gx = 0, gy = 0;
+      for (let ky = -1; ky <= 1; ky++) {
+        for (let kx = -1; kx <= 1; kx++) {
+          const weightX = sobelX[(ky + 1) * 3 + (kx + 1)];
+          const weightY = sobelY[(ky + 1) * 3 + (kx + 1)];
+          const pixel = grayscale[(y + ky) * width + (x + kx)];
+          gx += pixel * weightX;
+          gy += pixel * weightY;
+        }
+      }
+      // 에지 강도 계산
+      const magnitude = Math.sqrt(gx * gx + gy * gy);
+      edges[y * width + x] = Math.min(255, Math.round(magnitude));
+    }
+  }
+
+  // 3. 에지 강도를 결과 이미지에 복사
+  for (let i = 0; i < data.length; i += 4) {
+    const edge = edges[i / 4];
+    data[i] = data[i + 1] = data[i + 2] = edge; // R, G, B에 동일한 값 설정
+    // Alpha 값(data[i + 3])은 그대로 유지
+  }
+
+  return imageData;
+}

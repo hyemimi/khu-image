@@ -46,7 +46,7 @@ void apply_invert(uint8_t* imageData, int width, int height) {
 
 // Gaussian Blur 필터
 EMSCRIPTEN_KEEPALIVE
-void apply_gaussian_blur(uint8_t* imageData, int width, int height) {
+void apply_gaussian(uint8_t* imageData, int width, int height) {
     const int kernelSize = 5;
     const int kernel[kernelSize][kernelSize] = {
         {1, 4, 6, 4, 1},
@@ -88,7 +88,7 @@ void apply_gaussian_blur(uint8_t* imageData, int width, int height) {
 
 // Histogram Equalization 필터
 EMSCRIPTEN_KEEPALIVE
-void apply_histogram_equalization(uint8_t* imageData, int width, int height) {
+void apply_histogram(uint8_t* imageData, int width, int height) {
     int size = width * height * 4;
     std::vector<int> histogram(256, 0);
 
@@ -118,6 +118,54 @@ void apply_histogram_equalization(uint8_t* imageData, int width, int height) {
     for (int i = 0; i < size; i += 4) {
         uint8_t equalized = lookupTable[imageData[i]];
         imageData[i] = imageData[i + 1] = imageData[i + 2] = equalized;
+    }
+}
+
+// Threshold 필터: Grayscale 변환 후 이진화
+extern "C" void EMSCRIPTEN_KEEPALIVE apply_threshold(uint8_t* imageData, int width, int height, uint8_t threshold) {
+    int size = width * height * 4;
+    for (int i = 0; i < size; i += 4) {
+        // Grayscale 계산 (R, G, B 가중치)
+        uint8_t gray = static_cast<uint8_t>(
+            0.299 * imageData[i] + 0.587 * imageData[i + 1] + 0.114 * imageData[i + 2]
+        );
+        uint8_t value = (gray >= threshold) ? 255 : 0;
+        imageData[i] = imageData[i + 1] = imageData[i + 2] = value; // R, G, B에 동일한 값 설정
+    }
+}
+
+// 간단한 Canny Edge Detection 필터: Grayscale 변환 후 에지 검출
+extern "C" void EMSCRIPTEN_KEEPALIVE apply_canny(uint8_t* imageData, int width, int height) {
+    int size = width * height;
+    std::vector<uint8_t> gray(size);
+
+    // 1. Grayscale 변환 (R, G, B 가중치 사용)
+    for (int i = 0; i < size; i++) {
+        gray[i] = static_cast<uint8_t>(
+            0.299 * imageData[i * 4] + 0.587 * imageData[i * 4 + 1] + 0.114 * imageData[i * 4 + 2]
+        );
+    }
+
+    // 2. Sobel 필터를 사용한 에지 강도 계산
+    std::vector<uint8_t> edges(size);
+    for (int y = 1; y < height - 1; y++) {
+        for (int x = 1; x < width - 1; x++) {
+            int gx = (-1 * gray[(y - 1) * width + (x - 1)] + 1 * gray[(y - 1) * width + (x + 1)])
+                   + (-2 * gray[y * width + (x - 1)]       + 2 * gray[y * width + (x + 1)])
+                   + (-1 * gray[(y + 1) * width + (x - 1)] + 1 * gray[(y + 1) * width + (x + 1)]);
+
+            int gy = (-1 * gray[(y - 1) * width + (x - 1)] - 2 * gray[(y - 1) * width + x] - 1 * gray[(y - 1) * width + (x + 1)])
+                   + ( 1 * gray[(y + 1) * width + (x - 1)] + 2 * gray[(y + 1) * width + x] + 1 * gray[(y + 1) * width + (x + 1)]);
+
+            int magnitude = std::sqrt(gx * gx + gy * gy);
+            edges[y * width + x] = static_cast<uint8_t>(std::min(255, magnitude));
+        }
+    }
+
+    // 3. 결과를 이미지 데이터에 적용
+    for (int i = 0; i < size; i++) {
+        uint8_t value = edges[i];
+        imageData[i * 4] = imageData[i * 4 + 1] = imageData[i * 4 + 2] = value; // R, G, B에 동일한 값 설정
     }
 }
 
