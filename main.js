@@ -35,7 +35,7 @@ function applyFilter(filterType) {
       const jsGrayStart = window.performance.now();
       imageData = JSapplyGrayscale(imageData);
       const jsGrayEnd = window.performance.now();
-      console.log('js',jsGrayEnd-jsGrayStart);
+      console.log('JS Grayscale',jsGrayEnd-jsGrayStart,'ms');
       break;
     case 'JSsepia':
       const jsSepiaStart = window.performance.now();
@@ -47,19 +47,19 @@ function applyFilter(filterType) {
       const jsInvertStart = window.performance.now();
       imageData = JSapplyInvert(imageData);
       const jsInvertEnd = window.performance.now();
-      console.log('js',jsInvertEnd - jsInvertStart);
+      console.log('JS Invert',jsInvertEnd - jsInvertStart,'ms');
       break;
     case 'JSgaussian':
       const jsgaussianStart = window.performance.now();
       imageData = JSapplyGaussianBlur(imageData,width,height);
       const jsgaussianEnd = window.performance.now();
-      console.log('js',jsgaussianEnd - jsgaussianStart);
+      console.log('JS Gaussian',jsgaussianEnd - jsgaussianStart,'ms');
       break;
     case 'JShistogram':
       const jshistogramStart = window.performance.now();
       imageData = JSapplyHistogramEqualization(imageData);
       const jshistogramEnd = window.performance.now();
-      console.log('js',jshistogramEnd - jshistogramStart);
+      console.log('JS Histogram Equalization',jshistogramEnd - jshistogramStart,'ms');
       break;
     case 'JSthreshold':
       console.time('JS Threshold');
@@ -101,7 +101,7 @@ function applyWASMFilter(filterType) {
       const wasmGrayStart = window.performance.now();
       Module.ccall("apply_grayscale", null, ["number", "number", "number"], [dataPtr, width, height]);
       const wasmGrayEnd = window.performance.now();
-      console.log('wasm', wasmGrayEnd - wasmGrayStart);
+      console.log('WASM Grayscale', wasmGrayEnd - wasmGrayStart);
       break;
     case 'WASMsepia':
       const wasmSepiaStart = window.performance.now();
@@ -113,20 +113,20 @@ function applyWASMFilter(filterType) {
       const wasmInvertStart = window.performance.now();
       Module.ccall("apply_invert", null, ["number", "number", "number"], [dataPtr, width, height]);
       const wasmInvertEnd = window.performance.now();
-      console.log('wasm',wasmInvertEnd - wasmInvertStart);
+      console.log('WASM Invert',wasmInvertEnd - wasmInvertStart,'ms');
 
       break;
     case 'WASMgaussian':
       const wasmGaussianStart = window.performance.now();
       Module.ccall("apply_gaussian", null, ["number", "number", "number"], [dataPtr, width, height]);
       const wasmGaussianEnd = window.performance.now();
-      console.log('wasm',wasmGaussianEnd - wasmGaussianStart);
+      console.log('WASM Gaussian',wasmGaussianEnd - wasmGaussianStart,'ms');
       break;
     case 'WASMhistogram':
       const wasmHistogramStart = window.performance.now();
       Module.ccall("apply_histogram", null, ["number", "number", "number"], [dataPtr, width, height]);
       const wasmHistogramEnd = window.performance.now();
-      console.log('wasm',wasmHistogramEnd - wasmHistogramStart);
+      console.log('WASM Histogram Equalization',wasmHistogramEnd - wasmHistogramStart,'ms');
       break;
     case 'WASMthreshold':
       console.time('WASM Threshold');

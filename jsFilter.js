@@ -15,13 +15,13 @@ export function JSapplyGrayscale(imageData) {
 export function JSapplySepia(imageData) {
   const data = imageData.data;
   for (let i = 0; i < data.length; i += 4) {
-    const red = data[i];
-    const green = data[i + 1];
-    const blue = data[i + 2];
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
 
-    data[i] = red + (red * 0.393 + green * 0.769 + blue * 0.189 - red);
-    data[i + 1] = green + (red * 0.349 + green * 0.686 + blue * 0.168 - green);
-    data[i + 2] = blue + (red * 0.272 + green * 0.534 + blue * 0.131 - blue);
+    data[i]     = Math.min(0.393 * r + 0.769 * g + 0.189 * b, 255); // R'
+    data[i + 1] = Math.min(0.349 * r + 0.686 * g + 0.168 * b, 255); // G'
+    data[i + 2] = Math.min(0.272 * r + 0.534 * g + 0.131 * b, 255); // B'
   }
   return imageData;
 }
