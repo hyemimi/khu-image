@@ -1,51 +1,64 @@
-
-// 그레이스케일 필터: 슬라이더 강도에 따라 조정
 export function JSapplyGrayscale(imageData) {
-  const data = imageData.data;
-  for (let i = 0; i < data.length; i += 4) {
-    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    data[i] = data[i] + (avg - data[i]);       // Red
-    data[i + 1] = data[i + 1] + (avg - data[i + 1]) ; // Green
-    data[i + 2] = data[i + 2] + (avg - data[i + 2]) ; // Blue
+  const width = imageData.width;
+  const height = imageData.height;
+  const input = imageData.data; // 원본 데이터
+  const output = new Uint8ClampedArray(input.length); // 새로운 데이터 생성
+
+  for (let i = 0; i < input.length; i += 4) {
+    const r = input[i];
+    const g = input[i + 1];
+    const b = input[i + 2];
+    const gray = Math.floor(0.299 * r + 0.587 * g + 0.114 * b);
+
+    output[i] = output[i + 1] = output[i + 2] = gray; // Grayscale 적용
+    output[i + 3] = input[i + 3]; // Alpha 채널 유지
   }
-  return imageData;
+
+  return new ImageData(output, width, height); // 새로운 ImageData 반환
 }
 
-// 세피아 필터: 슬라이더 강도에 따라 조정
 export function JSapplySepia(imageData) {
-  const data = imageData.data;
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
+  const width = imageData.width;
+  const height = imageData.height;
+  const input = imageData.data;
+  const output = new Uint8ClampedArray(input.length);
 
-    data[i]     = Math.min(0.393 * r + 0.769 * g + 0.189 * b, 255); // R'
-    data[i + 1] = Math.min(0.349 * r + 0.686 * g + 0.168 * b, 255); // G'
-    data[i + 2] = Math.min(0.272 * r + 0.534 * g + 0.131 * b, 255); // B'
+  for (let i = 0; i < input.length; i += 4) {
+    const r = input[i];
+    const g = input[i + 1];
+    const b = input[i + 2];
+
+    output[i] = Math.min(0.393 * r + 0.769 * g + 0.189 * b, 255); // R'
+    output[i + 1] = Math.min(0.349 * r + 0.686 * g + 0.168 * b, 255); // G'
+    output[i + 2] = Math.min(0.272 * r + 0.534 * g + 0.131 * b, 255); // B'
+    output[i + 3] = input[i + 3]; // Alpha 채널 유지
   }
-  return imageData;
+
+  return new ImageData(output, width, height);
 }
 
-// 색상 반전 필터: 슬라이더 강도에 따라 조정
 export function JSapplyInvert(imageData) {
-  const data = imageData.data;
+  const width = imageData.width;
+  const height = imageData.height;
+  const input = imageData.data;
+  const output = new Uint8ClampedArray(input.length);
 
-  for (let i = 0; i < data.length; i += 4) {
-    data[i] = 255 - data[i];     // Red
-    data[i + 1] = 255 - data[i + 1]; // Green
-    data[i + 2] = 255 - data[i + 2]; // Blue
-    // Alpha 값(data[i + 3])은 그대로 유지
-}
-  return imageData;
+  for (let i = 0; i < input.length; i += 4) {
+    output[i] = 255 - input[i];       // Red
+    output[i + 1] = 255 - input[i + 1]; // Green
+    output[i + 2] = 255 - input[i + 2]; // Blue
+    output[i + 3] = input[i + 3];       // Alpha 채널 유지
+  }
+
+  return new ImageData(output, width, height);
 }
 
-// Gaussian Blur 필터
 export function JSapplyGaussianBlur(imageData, width, height) {
-  const data = imageData.data;
+  const input = imageData.data;
+  const output = new Uint8ClampedArray(input.length);
   const kernel = [1, 4, 6, 4, 1, 4, 16, 24, 16, 4, 6, 24, 36, 24, 6, 4, 16, 24, 16, 4, 1, 4, 6, 4, 1];
   const kernelSize = 5;
   const kernelSum = kernel.reduce((a, b) => a + b, 0);
-  const output = new Uint8ClampedArray(data);
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -58,9 +71,9 @@ export function JSapplyGaussianBlur(imageData, width, height) {
           const weight = kernel[(ky + 2) * kernelSize + (kx + 2)];
           const index = (py * width + px) * 4;
 
-          r += data[index] * weight;
-          g += data[index + 1] * weight;
-          b += data[index + 2] * weight;
+          r += input[index] * weight;
+          g += input[index + 1] * weight;
+          b += input[index + 2] * weight;
         }
       }
 
@@ -68,71 +81,84 @@ export function JSapplyGaussianBlur(imageData, width, height) {
       output[index] = r / kernelSum;
       output[index + 1] = g / kernelSum;
       output[index + 2] = b / kernelSum;
+      output[index + 3] = input[index + 3]; // Alpha 채널 유지
     }
   }
 
-  imageData.data.set(output);
-  return imageData;
+  return new ImageData(output, width, height);
 }
 
-// Histogram Equalization 필터
 export function JSapplyHistogramEqualization(imageData) {
-  const data = imageData.data;
+  const width = imageData.width;
+  const height = imageData.height;
+  const input = imageData.data;
+  const output = new Uint8ClampedArray(input.length);
   const histogram = new Array(256).fill(0);
 
-  // 1. 히스토그램 계산
-  for (let i = 0; i < data.length; i += 4) {
-    const gray = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
-    histogram[gray]++;
-    data[i] = data[i + 1] = data[i + 2] = gray; // 그레이스케일 변환
+  // 1. 그레이스케일 변환
+  for (let i = 0; i < input.length; i += 4) {
+    const gray = Math.floor(0.299 * input[i] + 0.587 * input[i + 1] + 0.114 * input[i + 2]);
+    input[i] = input[i + 1] = input[i + 2] = gray; // 그레이스케일 변환
   }
 
-  // 2. 누적 분포 계산 (CDF)
+  // 2. 히스토그램 계산
+  for (let i = 0; i < input.length; i += 4) {
+    histogram[input[i]]++;
+  }
+
+  // 3. 누적 분포 계산 (CDF)
   const cdf = new Array(256).fill(0);
   cdf[0] = histogram[0];
   for (let i = 1; i < 256; i++) {
     cdf[i] = cdf[i - 1] + histogram[i];
   }
 
-  // 3. CDF 정규화
-  const cdfMin = cdf.find(value => value > 0); // CDF의 최소값
-  const pixelCount = (data.length / 4);
+  // 4. CDF 정규화
+  const cdfMin = cdf.find(value => value > 0); // 최소 CDF 값
+  const pixelCount = input.length / 4; // 전체 픽셀 수
   const lookupTable = new Array(256);
   for (let i = 0; i < 256; i++) {
-    lookupTable[i] = Math.round(((cdf[i] - cdfMin) / (pixelCount - cdfMin)) * 255);
+    lookupTable[i] = Math.floor(((cdf[i] - cdfMin) / (pixelCount - cdfMin)) * 255); // Math.floor 사용
   }
 
-  // 4. 픽셀 값 매핑
-  for (let i = 0; i < data.length; i += 4) {
-    const equalized = lookupTable[data[i]];
-    data[i] = data[i + 1] = data[i + 2] = equalized;
+  // 5. 픽셀 값 매핑
+  for (let i = 0; i < input.length; i += 4) {
+    const gray = input[i]; // 그레이스케일 값을 그대로 사용
+    const equalized = lookupTable[gray];
+    output[i] = output[i + 1] = output[i + 2] = equalized; // R, G, B 동일
+    output[i + 3] = input[i + 3]; // Alpha 채널 유지
   }
 
-  return imageData;
+  return new ImageData(output, width, height);
 }
 
-// Threshold 필터: Grayscale 변환 후 이진화
+
 export function JSapplyThreshold(imageData, threshold) {
-  const data = imageData.data;
-  for (let i = 0; i < data.length; i += 4) {
-    // Grayscale 계산 (R, G, B 가중치)
-    const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+  const width = imageData.width;
+  const height = imageData.height;
+  const input = imageData.data;
+  const output = new Uint8ClampedArray(input.length);
+
+  for (let i = 0; i < input.length; i += 4) {
+    const gray = 0.299 * input[i] + 0.587 * input[i + 1] + 0.114 * input[i + 2];
     const value = gray >= threshold ? 255 : 0;
-    data[i] = data[i + 1] = data[i + 2] = value; // R, G, B에 동일한 값 설정
-    // Alpha 값(data[i + 3])은 그대로 유지
+
+    output[i] = output[i + 1] = output[i + 2] = value; // R, G, B에 동일한 값
+    output[i + 3] = input[i + 3]; // Alpha 채널 유지
   }
-  return imageData;
+
+  return new ImageData(output, width, height);
 }
 
-// 간단한 Canny Edge Detection: Grayscale 변환 후 Sobel 필터 기반
 export function JSapplyCanny(imageData, width, height) {
-  const data = imageData.data;
+  const input = imageData.data;
   const grayscale = new Uint8Array(width * height);
+  const output = new Uint8ClampedArray(input.length);
 
   // 1. Grayscale 변환 (R, G, B 가중치 사용)
-  for (let i = 0; i < data.length; i += 4) {
+  for (let i = 0; i < input.length; i += 4) {
     grayscale[i / 4] = Math.round(
-      0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
+      0.299 * input[i] + 0.587 * input[i + 1] + 0.114 * input[i + 2]
     );
   }
 
@@ -153,18 +179,17 @@ export function JSapplyCanny(imageData, width, height) {
           gy += pixel * weightY;
         }
       }
-      // 에지 강도 계산
       const magnitude = Math.sqrt(gx * gx + gy * gy);
       edges[y * width + x] = Math.min(255, Math.round(magnitude));
     }
   }
 
-  // 3. 에지 강도를 결과 이미지에 복사
-  for (let i = 0; i < data.length; i += 4) {
+  // 3. 에지 강도를 새로운 ImageData에 복사
+  for (let i = 0; i < input.length; i += 4) {
     const edge = edges[i / 4];
-    data[i] = data[i + 1] = data[i + 2] = edge; // R, G, B에 동일한 값 설정
-    // Alpha 값(data[i + 3])은 그대로 유지
+    output[i] = output[i + 1] = output[i + 2] = edge; // R, G, B 동일
+    output[i + 3] = input[i + 3]; // Alpha 채널 유지
   }
 
-  return imageData;
+  return new ImageData(output, width, height);
 }

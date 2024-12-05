@@ -122,7 +122,8 @@ void apply_histogram(uint8_t* imageData, int width, int height) {
 }
 
 // Threshold 필터: Grayscale 변환 후 이진화
-extern "C" void EMSCRIPTEN_KEEPALIVE apply_threshold(uint8_t* imageData, int width, int height, uint8_t threshold) {
+EMSCRIPTEN_KEEPALIVE
+void apply_threshold(uint8_t* imageData, int width, int height, uint8_t threshold) {
     int size = width * height * 4;
     for (int i = 0; i < size; i += 4) {
         // Grayscale 계산 (R, G, B 가중치)
@@ -135,7 +136,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE apply_threshold(uint8_t* imageData, int wid
 }
 
 // 간단한 Canny Edge Detection 필터: Grayscale 변환 후 에지 검출
-extern "C" void EMSCRIPTEN_KEEPALIVE apply_canny(uint8_t* imageData, int width, int height) {
+EMSCRIPTEN_KEEPALIVE
+void apply_canny(uint8_t* imageData, int width, int height) {
     int size = width * height;
     std::vector<uint8_t> gray(size);
 
